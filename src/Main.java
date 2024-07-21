@@ -13,6 +13,7 @@ public class Main {
 		try {
 			CustomTree<String> tree = f.readXMLFile("/home/marthoma/java/iotools/build/toto");
 			tree.display(false);
+			f.writeXMLFile(tree, "/home/marthoma/java/iotools/build/titi");
 		} catch (IOException e) {
 			System.out.println(e.getMessage());
 		}

@@ -1,7 +1,10 @@
 package ioTools;
 
+import java.beans.Customizer;
 import java.io.BufferedReader;
 import java.io.FileReader;
+import java.io.BufferedWriter;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.util.List;
 import java.util.ArrayList;
@@ -60,7 +63,7 @@ public class FileManager {
         return XMLparts;
     }
 
-    public boolean parseToken(String token, TokenTag expected) {
+    public boolean parseXMLToken(String token, TokenTag expected) {
         int n = token.length();
         boolean result = true;
         switch (expected) {
@@ -90,22 +93,26 @@ public class FileManager {
         }
     }
     
-    public CustomTree<String> parseLine(String line, List<String> XMLparts, CustomTree<String> parent)
+    public CustomTree<String> parseXMLLine(String line, List<String> XMLparts, CustomTree<String> parent)
     throws IOException {
         int n = XMLparts.size();
         switch (n) {
             case 2:
-                if (!this.parseToken(XMLparts.get(0), TokenTag.BLANK)) {
+                if (!this.parseXMLToken(XMLparts.get(0), TokenTag.BLANK)) {
                     throw new IOException("Invalid XML line: Wrong token configuration in\n" + line);
                 } else {
-                    if (this.parseToken(XMLparts.get(1), TokenTag.OPEN)) {
+                    if (this.parseXMLToken(XMLparts.get(1), TokenTag.OPEN)) {
                         String openTag = XMLparts.get(1);
                         int lnToken = openTag.length();
                         String childLabel = XMLparts.get(1).substring(1, lnToken-1);
-                        CustomTree<String> child = parent.addChild(childLabel);
-                        return child;
+                        try {
+                            CustomTree<String> child = parent.addChild(childLabel);
+                            return child;
+                        } catch (IOException e) {
+                            throw e;
+                        }
                     } else {
-                        if (this.parseToken(XMLparts.get(1), TokenTag.CLOSE)) {
+                        if (this.parseXMLToken(XMLparts.get(1), TokenTag.CLOSE)) {
                             String closeTag = XMLparts.get(1);
                             int lnToken = closeTag.length();
                             String closeLabel = XMLparts.get(1).substring(2, lnToken-1);
@@ -122,18 +129,22 @@ public class FileManager {
                 }
             case 4:
                 boolean valid = true;
-                valid &= this.parseToken(XMLparts.get(0), TokenTag.BLANK);
-                valid &= this.parseToken(XMLparts.get(1), TokenTag.OPEN);
-                valid &= this.parseToken(XMLparts.get(2), TokenTag.OTHER);
-                valid &= this.parseToken(XMLparts.get(3), TokenTag.CLOSE);
+                valid &= this.parseXMLToken(XMLparts.get(0), TokenTag.BLANK);
+                valid &= this.parseXMLToken(XMLparts.get(1), TokenTag.OPEN);
+                valid &= this.parseXMLToken(XMLparts.get(2), TokenTag.OTHER);
+                valid &= this.parseXMLToken(XMLparts.get(3), TokenTag.CLOSE);
                 if (!valid) {
                     throw new IOException("Invalid XML line: Wrong token configuration in\n" + line);
                 } else {
                     String openTag = XMLparts.get(1);
                     int lnToken = openTag.length();
                     String childLabel = XMLparts.get(1).substring(1, lnToken-1);
-                    CustomTree<String> child = parent.addChild(childLabel);
-                    child.addChild(XMLparts.get(2));
+                    try {
+                        CustomTree<String> child = parent.addChild(childLabel);
+                        child.addChild(XMLparts.get(2));
+                    } catch (IOException e) {
+                        throw e;
+                    }
                     return parent;
                 }
             default:
@@ -150,13 +161,53 @@ public class FileManager {
             CustomTree<String> parent = new CustomTree<String>(this.rootLabel);
             for (String line : lines) {
                 List<String> splittedLine = this.splitXMLLine(line);
-                parent = this.parseLine(line, splittedLine, parent);
+                parent = this.parseXMLLine(line, splittedLine, parent);
             }
             if (parent.getLabel().equals(this.rootLabel)) {
                 return parent;
             } else {
                 throw new IOException("Invalid XML file: All XML tags haven't been closed\n");
             }
+        }
+    }
+
+    public String writeXMLNode(CustomTree<String> node, String filePathName) {
+        String buffer = "";
+        if (!node.isLeaf()) {
+            int nodeDepth = node.getNodeDepth();
+            for (int i = 1; i < nodeDepth; i++) {
+                buffer += "\t";
+            }
+            buffer += "<" + node.getLabel() + ">";
+            if (node.getChildren().get(0).isLeaf()) {
+                buffer += node.getChildren().get(0).getLabel();
+                buffer += "</" + node.getLabel() + ">";
+                buffer += "\n";
+            } else {
+                buffer += "\n";
+                for (CustomTree<String> child : node.getChildren()) {
+                    buffer += this.writeXMLNode(child, filePathName);
+                }
+                for (int i = 1; i < nodeDepth; i++) {
+                    buffer += "\t";
+                }
+                buffer += "</" + node.getLabel() + ">";
+                buffer += "\n";
+            }
+        }
+        return buffer;
+    }
+
+    public void writeXMLFile(CustomTree<String> root, String filePathName)
+    throws IOException {
+        try {
+            BufferedWriter writer = new BufferedWriter(new FileWriter(filePathName));
+            for (CustomTree<String> child : root.getChildren()) {
+                writer.write(this.writeXMLNode(child, filePathName));
+            }
+            writer.close();
+        } catch (IOException e) {
+            throw e;
         }
     }
 }
