@@ -12,6 +12,9 @@ import java.awt.event.ActionListener;
 import java.awt.event.ActionEvent;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
+import javax.swing.tree.DefaultMutableTreeNode;
+import javax.swing.tree.DefaultTreeCellRenderer;
+import javax.swing.tree.DefaultTreeModel;
 
 import java.awt.GridBagLayout;
 import java.awt.GridBagConstraints;
@@ -25,8 +28,11 @@ import javax.swing.JButton;
 import java.awt.Toolkit;
 import java.awt.Dimension;
 import java.awt.Color;
-
+import java.awt.Component;
+import javax.swing.UIManager;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 
 
 /**
@@ -34,245 +40,362 @@ import java.io.IOException;
  */
 public class SearchFrame extends JFrame implements ActionListener {
     
-    private String currentDir;
-    private List<String> currentFiles = new ArrayList<String>();
-    private List<String> currentFolders = new ArrayList<String>();
-    private Container inside = this.getContentPane();
-    private int frameHeight;
-    private int frameWidth;
+    protected String CURRENTDIR;
+    protected List<String> CURRENTFILES = new ArrayList<String>();
+    protected List<String> CURRENTFOLDERS = new ArrayList<String>();
+    protected int FRAMEHEIGHT;
+    protected int FRAMEWIDTH;
 
-    private double DEFAULTSCREENFACTOR = 1.3 / 2;
-    private int SELECTBARHEIGHT = 80;
-    private int SCROLLBARWIDTH = 30;
-    private Color FONTCOLOR = new Color(31, 31, 31);
-    private Color SELECTBARCOLOR = new Color(24, 24, 24);
-    private Color SCROLLBARCOLOR = new Color(79, 79, 79);
+    protected double INITIALSCREENFACTOR = 1.3 / 2;
+    protected Color FONTCOLOR = new Color(31, 31, 31);
 
-    private int SELECTBUTTONWIDTH = 120;
-    private int SELECTBUTTONHEIGHT = 60;
+    protected int BORDERSPACE = 10;
+    protected int VSPACE = 15;
+    protected int HSPACE = 15;
 
-    private String selected = "";
-    private String selectedType = "";
+    protected String CHOOSEFOLDERTEXT = "Choose Folder :";
+    protected String CHOOSEFILETEXT = "Choose File :";
+    protected String MAKEFOLDERTEXT = "New Folder :";
+    protected String CREATEBUTTONTEXT = "Create";
+    protected String OPENBUTTONTEXT = "Open";
+    protected String SELECTBUTTONTEXT = "Select";
+    protected String BACKBUTTONTEXT = "Back";
+    protected String CANCELBUTTONTEXT = "Cancel";
+    protected JTextField NEWFOLDERTEXTFIELD = new JTextField();
+    protected DefaultMutableTreeNode ROOT = new DefaultMutableTreeNode("root");
+    protected DefaultTreeModel FOLDERTREEMODEL = new DefaultTreeModel(ROOT);
+    protected JTree FOLDERTREE = new JTree(FOLDERTREEMODEL);
+    protected JScrollPane SCROLLPANE = new JScrollPane(FOLDERTREE);
+
+    protected String BUTTONTEXT = "";
+
+    protected String SELECTED = "";
+    protected ChooseType EXPECTEDTYPE = ChooseType.FILE;
+
+
+    protected enum ChooseType {
+        FOLDER, FILE
+    }
+    
+    public SearchFrame()
+    throws IOException {
+        super();
+        this.CURRENTDIR = System.getProperty("user.dir");
+        try {
+            this.getFilesAndDirectories();
+            this.buildJTree();
+            this.FOLDERTREE.setCellRenderer(new MyTreeCellRenderer());
+
+            // Define default frame parameters
+            this.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+            this.setLayout(new GridBagLayout());
+
+            // Get the frame dimensions and compute its initial location
+            Dimension dimScreen = Toolkit.getDefaultToolkit().getScreenSize();
+            int FRAMEHEIGHT = (int) (this.INITIALSCREENFACTOR * dimScreen.height);
+            int FRAMEWIDTH = (int) (this.INITIALSCREENFACTOR * dimScreen.width);
+            this.setPreferredSize(new Dimension(FRAMEWIDTH, FRAMEHEIGHT));
+            this.setLocation((dimScreen.width-FRAMEWIDTH) / 2, (dimScreen.height-FRAMEHEIGHT) / 2);
+            this.pack();
+
+            this.setVisibleRoot(false);
+            this.placeComponents();
+            this.update();
+        } catch (IOException e) {
+            throw e;
+        }
+    }
+
+    protected void setVisibleRoot(boolean showRoot) {
+        if (!showRoot) {
+            this.FOLDERTREE.expandRow(0);
+            this.FOLDERTREE.setRootVisible(false);
+        }
+    }
+
+    protected void setExpectedType(ChooseType type) {
+        this.EXPECTEDTYPE = type;
+    }
 
     /**
-     * Get all files and subdirectoriers in currentFiles and currentFolders
+     * Get all files and subdirectoriers in CURRENTFILES and CURRENTFOLDERS
      */
     private void getFilesAndDirectories()
     throws IOException {
-        this.currentFiles.clear();
-        this.currentFolders.clear();
-        File currentDirFile = new File(this.currentDir);
-        if (!currentDirFile.exists()) {
-            throw new IOException("Directory " + this.currentDir + " does not exists!");
+        this.CURRENTFILES.clear();
+        this.CURRENTFOLDERS.clear();
+        File CURRENTDIRFile = new File(this.CURRENTDIR);
+        if (!CURRENTDIRFile.exists()) {
+            throw new IOException("Directory " + this.CURRENTDIR + " does not exists!");
         }
-        for (File fileFolderName : currentDirFile.listFiles()) {
+        for (File fileFolderName : CURRENTDIRFile.listFiles()) {
             if (fileFolderName.isDirectory()) {
-                this.currentFolders.add(fileFolderName.getName());
+                this.CURRENTFOLDERS.add(fileFolderName.getName());
             } else {
-                this.currentFiles.add(fileFolderName.getName());
+                this.CURRENTFILES.add(fileFolderName.getName());
+            }
+        }
+        this.CURRENTFILES.sort(String::compareToIgnoreCase);
+        this.CURRENTFOLDERS.sort(String::compareToIgnoreCase);
+    }
+
+    protected void buildJTree() {
+        this.ROOT.removeAllChildren();
+        for (String folder : this.CURRENTFOLDERS) {
+            DefaultMutableTreeNode folderNode = new DefaultMutableTreeNode(new FileOrFolderNode(folder, true));
+            this.ROOT.add(folderNode);
+        }
+        if (this.EXPECTEDTYPE.equals(ChooseType.FILE)) {
+            for (String file : this.CURRENTFILES) {
+                DefaultMutableTreeNode fileNode = new DefaultMutableTreeNode(new FileOrFolderNode(file));
+                this.ROOT.add(fileNode);
+            }
+        }
+        this.FOLDERTREEMODEL.reload();
+    }
+
+    public String getCurrentDirectory() {
+        return this.CURRENTDIR;
+    }
+
+    public List<String> getCurrentFiles() {
+        return this.CURRENTFILES;
+    }
+
+    public List<String> getCurrentFolders() {
+        return this.CURRENTFOLDERS;
+    }
+
+    public String getSelected() {
+        return this.SELECTED;
+    }
+
+    public void placeComponents() {
+        // Create each item
+        JLabel chooseLabel = new JLabel(this.CHOOSEFILETEXT);
+        if (this.EXPECTEDTYPE.equals(ChooseType.FOLDER)) {
+            chooseLabel.setText(this.CHOOSEFOLDERTEXT);
+        }
+        JLabel newFolderLabel = new JLabel(this.MAKEFOLDERTEXT);
+        JButton createFolderButton = new JButton(this.CREATEBUTTONTEXT);
+        createFolderButton.addActionListener(this);
+        JButton openButton = new JButton(this.OPENBUTTONTEXT);
+        openButton.addActionListener(this);
+        JButton selectButton = new JButton(this.SELECTBUTTONTEXT);
+        selectButton.addActionListener(this);
+        JButton backButton = new JButton(this.BACKBUTTONTEXT);
+        backButton.addActionListener(this);
+        JButton cancelButton = new JButton(this.CANCELBUTTONTEXT);
+        cancelButton.addActionListener(this);
+        
+        // Set the same dimensions for all buttons
+        int preferredWidth = (int) newFolderLabel.getPreferredSize().getWidth();
+        int preferredHeight = (int) createFolderButton.getPreferredSize().getHeight();
+        int minimumWidth = (int) newFolderLabel.getMinimumSize().getWidth();
+        int minimumHeight = (int) createFolderButton.getMinimumSize().getHeight();
+        Dimension preferredDimension = new Dimension(preferredWidth, preferredHeight);
+        Dimension minimumDimension = new Dimension(minimumWidth, minimumHeight);
+        createFolderButton.setPreferredSize(preferredDimension);
+        createFolderButton.setMinimumSize(minimumDimension);
+        openButton.setPreferredSize(preferredDimension);
+        openButton.setMinimumSize(minimumDimension);
+        selectButton.setPreferredSize(preferredDimension);
+        selectButton.setMinimumSize(minimumDimension);
+        backButton.setPreferredSize(preferredDimension);
+        backButton.setMinimumSize(minimumDimension);
+        cancelButton.setPreferredSize(preferredDimension);
+        cancelButton.setMinimumSize(minimumDimension);
+
+        // Place each item
+        GridBagConstraints gbc = new GridBagConstraints();
+        
+        gbc.gridx = gbc.gridy = 0;
+        gbc.gridwidth = GridBagConstraints.REMAINDER;
+        gbc.anchor = GridBagConstraints.BASELINE_LEADING;
+        gbc.insets = new Insets(this.BORDERSPACE, this.BORDERSPACE, 0, this.BORDERSPACE);
+        this.add(chooseLabel, gbc);
+
+        gbc.gridy = 1;
+        gbc.weightx = gbc.weighty = 1;
+        gbc.fill = GridBagConstraints.BOTH;
+        gbc.insets = new Insets(this.HSPACE, this.BORDERSPACE, 0, this.BORDERSPACE);
+        this.add(this.SCROLLPANE, gbc);
+
+        gbc.gridy = 2;
+        gbc.gridwidth = 1;
+        gbc.weightx = gbc.weighty = 0;
+        gbc.fill = GridBagConstraints.NONE;
+        gbc.insets = new Insets(this.HSPACE, this.BORDERSPACE, 0, 0);
+        this.add(newFolderLabel, gbc);
+
+        gbc.gridx = 1;
+        gbc.gridwidth = GridBagConstraints.RELATIVE;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.anchor = GridBagConstraints.BASELINE;
+        gbc.insets = new Insets(0, this.VSPACE, 0, 0);
+        this.add(this.NEWFOLDERTEXTFIELD, gbc);
+
+        gbc.gridx = 3;
+        gbc.gridwidth = GridBagConstraints.REMAINDER;
+        gbc.weightx = 0;
+        gbc.anchor = GridBagConstraints.BASELINE_TRAILING;
+        gbc.insets = new Insets(0, this.VSPACE, 0, this.BORDERSPACE);
+        this.add(createFolderButton, gbc);
+
+        gbc.gridx = 0;
+        gbc.gridy = 3;
+        gbc.gridwidth = 1;
+        gbc.anchor = GridBagConstraints.BASELINE_LEADING;
+        gbc.fill = GridBagConstraints.NONE;
+        gbc.insets = new Insets(this.HSPACE, this.BORDERSPACE, this.BORDERSPACE, 0);
+        this.add(openButton, gbc);
+
+        gbc.gridx = 1;
+        gbc.insets = new Insets(0, this.VSPACE, 0, 0);
+        this.add(selectButton, gbc);
+
+        gbc.gridx = 2;
+        gbc.gridwidth = GridBagConstraints.RELATIVE;
+        gbc.weightx = 1;
+        gbc.anchor = GridBagConstraints.BASELINE_TRAILING;
+        gbc.insets = new Insets(0, this.VSPACE, 0, 0);
+        this.add(backButton, gbc);
+
+        gbc.gridx = 3;
+        gbc.gridwidth = GridBagConstraints.REMAINDER;
+        gbc.weightx = 0;
+        gbc.insets = new Insets(0, this.VSPACE, 0, this.BORDERSPACE);
+        this.add(cancelButton, gbc);
+    }
+
+    public void update() {
+        this.revalidate();
+        this.repaint();
+        this.setVisible(true);
+    }
+
+    /**
+     * To override, to call when leaving the SearchFrame.
+     */
+    public void closeSearchFrame() {
+        this.dispose();
+    }
+
+    public void actionPerformed(ActionEvent event) {
+        JButton button = (JButton) event.getSource();
+        this.BUTTONTEXT = button.getText();
+        if (this.BUTTONTEXT.equals(this.CANCELBUTTONTEXT)) {
+            this.SELECTED = "";
+            this.closeSearchFrame();
+        }
+        if (this.BUTTONTEXT.equals(this.CREATEBUTTONTEXT)) {
+            if (!this.NEWFOLDERTEXTFIELD.getText().isBlank()) {
+                String newFolderName = this.NEWFOLDERTEXTFIELD.getText();
+                String newDirectory = this.CURRENTDIR + "/" + newFolderName;
+                try {
+                    Files.createDirectories(Paths.get(newDirectory));
+                    this.getFilesAndDirectories();
+                    this.buildJTree();
+                    this.update();
+                } catch (IOException e) {
+                    System.out.println(e.getMessage());
+                }
+            }
+            this.NEWFOLDERTEXTFIELD.setText("");
+        }
+        if (this.BUTTONTEXT.equals(this.OPENBUTTONTEXT)) {
+            DefaultMutableTreeNode node = (DefaultMutableTreeNode) this.FOLDERTREE.getLastSelectedPathComponent();
+            if (node != null) {
+                FileOrFolderNode selectedNode = (FileOrFolderNode) node.getUserObject();
+                if (selectedNode.isFolder()) {
+                    try {
+                        this.CURRENTDIR += "/" + selectedNode.getName();
+                        this.getFilesAndDirectories();
+                        this.buildJTree();
+                        this.update();
+                    } catch (IOException e) {
+                        System.out.println(e.getMessage());
+                    }
+                }
+            }
+        }
+        if (this.BUTTONTEXT.equals(this.SELECTBUTTONTEXT)) {
+            DefaultMutableTreeNode node = (DefaultMutableTreeNode) this.FOLDERTREE.getLastSelectedPathComponent();
+            if (node != null) {
+                FileOrFolderNode selectedNode = (FileOrFolderNode) node.getUserObject();
+                boolean condition = selectedNode.isFolder() && this.EXPECTEDTYPE.equals(ChooseType.FOLDER);
+                condition = condition || (!selectedNode.isFolder() && this.EXPECTEDTYPE.equals(ChooseType.FILE));
+                if (condition) {
+                    this.SELECTED = this.CURRENTDIR + "/" + selectedNode.getName();
+                    this.closeSearchFrame();
+                }
+            }
+        }
+        if (this.BUTTONTEXT.equals(this.BACKBUTTONTEXT)) {
+            try {
+                this.CURRENTDIR += "/..";
+                this.getFilesAndDirectories();
+                this.buildJTree();
+                this.update();
+            } catch (IOException e) {
+                System.out.println(e.getMessage());
             }
         }
     }
 
 
-    /*************************** Comment ***************************/
+    private static class FileOrFolderNode {
 
-    protected void test() {
-        /* 1- Initialisation du container. */
-        this.setLayout(new GridBagLayout());
-        JLabel chooseLabel = new JLabel("Choose Download Folder :");
-        JLabel folderLabel = new JLabel("Folder :");
-        JTextField folderTextField = new JTextField();
-        JButton makeNewFolderButton = new JButton("Make New Folder");
-        JButton okButton = new JButton("Ok");
-        JButton cancelButton = new JButton("Cancel");
-        okButton.setPreferredSize(cancelButton.getPreferredSize());
-        okButton.setMinimumSize(cancelButton.getMinimumSize());
-        JTree folderTree = new JTree();
-        JScrollPane scrollPane = new JScrollPane(folderTree);
+        private String name;
+        private boolean isFolder = true;
 
-        GridBagConstraints gbc = new GridBagConstraints();
-        gbc.gridx = gbc.gridy = 0; // la grille commence en (0, 0)
-        gbc.gridwidth = GridBagConstraints.REMAINDER; // seul composant de sa colonne, il est donc le dernier.
-        gbc.gridheight = 1; // valeur par défaut - peut s'étendre sur une seule ligne.
-        gbc.anchor = GridBagConstraints.LINE_START; // ou BASELINE_LEADING mais pas WEST.
-        gbc.insets = new Insets(10, 15, 0, 0); // Marge à gauche de 15 et marge au dessus de 10.
-        /* - les attributs ipadx, ipdady, weightx et weighty valent tous 0 (valeur par défaut).
-        * - l'attribut fill est à NONE, car on ne souhaite pas de redimentionnement pour cette étiquette. */
-        this.add(chooseLabel, gbc);
-        
-        /* réutilisons le même objet <code>gbc</code>. */
-        /* positionnons notre composant suivant (notre JScrollPane) sur la ligne suivante. */
-        gbc.gridx = 0;
-        gbc.gridy = 1;
-        /* ce qui suit est inutile, nous avions déjà définie des valeurs pareilles pour le composant précédent.
-        * cependant, il est toujours bon d'avoir toute les étapes dans un premier exemple. */
-        gbc.gridwidth = GridBagConstraints.REMAINDER;
-        gbc.gridheight = 1; // valeur par défaut.
-        /* Nous pouvons le voir sur l'image à réaliser. Ce composant s'étend sur tout l'espace qu'il recoit aussi bien
-        * horizontalement que verticalement.
-        * Remarquons que c'est souvent le cas pour ce genre de composant de les laissez s'étendre un maximum possible dans 
-        * le container en récupérant l'espace supplémentaire.
-        */
-        gbc.weightx = 1.;
-        gbc.weighty = 1.;
-        gbc.fill = GridBagConstraints.BOTH;
-        gbc.anchor = GridBagConstraints.LINE_START; // pas WEST.
-        /* Marge à gauche de 15 (gardons la même que précédemment)
-        * Marge au dessus de 30 et
-        * Marge à droite de 10. */
-        gbc.insets = new Insets(30, 15, 0, 10);
-        this.add(scrollPane, gbc);
+        public FileOrFolderNode(String nodeName, boolean isFolderNode) {
+            this.name = nodeName;
+            this.isFolder = isFolderNode;
+        }
 
-        /* le composant suivant à placer est notre étiquette.
-        * Réutilisons encore le même objet gbc.*/
-        gbc.gridx = 0;
-        gbc.gridy = 2;
-        /* une seule cellule sera disponible pour ce composant. */
-        gbc.gridwidth = 1;
-        gbc.gridheight = 1;
-        /* Nous devons supprimer les poids que nous avons spécifiés précédemment, et supprimer
-        * le redimentionnement. */
-        gbc.weightx = 0.;
-        gbc.weighty = 0.;
-        gbc.fill = GridBagConstraints.NONE;
-        /* Maintenant, nous voyons sur notre interface que le composant n'est pas le seul sur sa ligne.
-        * Un champ de saisie le suit. Pour aligner correctement les étiquettes et les champs de saisie,
-        * la ligne d'écriture nous facilite le travail. Nous allons l'utiliser ici. */
-        gbc.anchor = GridBagConstraints.BASELINE_LEADING; // pas LINE_START ni WEST !!
-        /* Une petite marge autour du composant. Attention à toujours indiquer les mêmes marges à gauche, sinon les
-        * composants ne sont plus alignés. */
-        gbc.insets = new Insets(10, 15, 0, 0);
-        this.add(folderLabel, gbc);
+        public FileOrFolderNode(String nodeName) {
+            this(nodeName, false);
+        }
 
+        public String getName() {
+            return name;
+        }
 
-        /* passons au composant suivant: le champ de saisie. */
-        gbc.gridx = 1; /* une position horizontalement à droite de l'étiquette */
-        gbc.gridy = 2; /* sur la même ligne que l'étiquette */
-        gbc.gridwidth = GridBagConstraints.REMAINDER; /* il est le dernier composant de sa ligne. */
-        gbc.gridheight = 1; /* une seule cellule verticalement suffit */
-        /* Le composant peut s'étendre sur tout l'espace qui lui est attribué horizontalement. */
-        gbc.fill = GridBagConstraints.HORIZONTAL;
-        /* Alignons ce composant sur la même ligne d'écriture que son étiquette. */
-        gbc.anchor = GridBagConstraints.BASELINE;
-        /* Une petite marge autour du composant. Remarquons que nous n'avons pas spécifié de marge au dessus du
-        * composant. Comme nous avons décidé d'alginer ce composant sur la même ligne d'écriture que l'étiquette, 
-        * la marge du haut sera calculée en interne pour s'aligner correctement avec l'étiquette. */
-        gbc.insets = new Insets(0, 15, 0, 10);
-        this.add(folderTextField, gbc);
+        public boolean isFolder() {
+            return isFolder;
+        }
 
-        /* Nous pouvons passé aux boutons. */
-        gbc.gridy = 3; /* nouvelle ligne */
-        gbc.gridx = 0; /* première colonne, nous allons placé notre bouton "make new folder" */
-        /* Reprenons l'image. Nous voyons que le bouton est plus large que l'étiquette située au dessus de lui et
-        * que le champ de saisie commence avant le bord gauche du bouton. Nous précisons donc deux cellules
-        * horizontalement.
-        */
-        gbc.gridwidth = 2;
-        gbc.gridheight = 1; /* une seule cellule verticalement suffit */
-        /* Nous allons alignerles boutons sur leur ligne d'écriture également.*/
-        gbc.anchor = GridBagConstraints.BASELINE_LEADING;
-        /* Aucun redimentionnement possible. Le bouton garde toujours soit sa taille minimum soit préférée. */
-        gbc.fill = GridBagConstraints.NONE;
-        /* Les attributs weightx, weighty sont tout deux à 0.*/
-        /* Une petite marge autour du composant.*/
-        gbc.insets = new Insets(10, 15, 10, 10);
-        this.add(makeNewFolderButton, gbc);
-
-        /* bouton suivant. */
-        /* le bouton précédent peut s'étendre sur deux cellules horizontalement. Celui-ci commence en 2. */
-        gbc.gridx = 2; /* pour les dubitatifs, gridy vaut toujours 3 ;-) */
-        gbc.gridwidth = GridBagConstraints.RELATIVE; // le bouton est l'avant dernier composant de sa ligne.
-        /* nous allons, sur ce bouton, définir un poids pour que celui-ci s'éloigne le plus du bouton précédent.*/
-        gbc.weightx = 1.;
-        gbc.anchor = GridBagConstraints.BASELINE_TRAILING; // Pas LINE_END, ni EAST.
-        gbc.insets = new Insets(0, 0, 0, 0);
-        this.add(okButton, gbc);
-
-        /* notre dernier bouton. */
-        gbc.gridx = 3;
-        gbc.weightx = 0.; /* remettons le poids à zéro. */
-        gbc.insets = new Insets(0, 3, 0, 10);
-        this.add(cancelButton, gbc);
-    }
-    
-
-
-    public SearchFrame()
-    throws IOException {
-        super();
-        this.currentDir = System.getProperty("user.dir");
-        try {
-            this.getFilesAndDirectories();
-            // Define default frame parameters
-            this.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-            this.inside.setBackground(this.FONTCOLOR);
-            Dimension dimScreen = Toolkit.getDefaultToolkit().getScreenSize();
-            this.frameHeight = (int) (this.DEFAULTSCREENFACTOR * dimScreen.height);
-            this.frameWidth = (int) (this.DEFAULTSCREENFACTOR * dimScreen.width);
-            this.inside.setPreferredSize(new Dimension(this.frameWidth, this.frameHeight));
-            this.setLocation((dimScreen.width-this.frameWidth) / 2, (dimScreen.height-this.frameHeight) / 2);
-            this.test();
-            this.pack();
-            this.setVisible(true);
-        } catch (IOException e) {
-            throw e;
+        @Override
+        public String toString() {
+            return name;
         }
     }
-    
-    public String getCurrentDirectory() {
-        return this.currentDir;
-    }
 
-    public List<String> getCurrentFiles() {
-        return this.currentFiles;
-    }
 
-    public List<String> getCurrentFolders() {
-        return this.currentFolders;
-    }
-    
-    /**
-     * Open a new directory.
-     */
-    // public void openDirectory(String newDirectory)
-    // throws IOException {
-    //     this.currentDir = newDirectory;
-    //     try {
-    //         this.getFilesAndDirectories();
-    //         this.displayFolder();
-    //     } catch (IOException e) {
-    //         throw e;
-    //     }
-    // }
-    
-    /**
-     * Display the current directory on the interface.
-     */
-    // public void displayFolder() {
-    //     this.addSelectBar();
-    //     this.addScrollBar();
-    //     this.addMainFont();
-    //     this.setVisible(true);
-    // }
+    private static class MyTreeCellRenderer extends DefaultTreeCellRenderer {
 
-    public void actionPerformed(ActionEvent event) {
-        JButton button = (JButton) event.getSource();
-        switch (button.getText()) {
-            case "Cancel":
-                this.dispose();
-                break;
-            // case "Back":
-            //     try{
-            //         this.openDirectory(this.currentDir + "/..");
-            //         System.out.println(this.currentDir);
-            //     } catch (IOException error) {
-            //         System.out.println(error.getMessage());
-            //     }
-            //     break;
-            default:
-                System.out.println("No instruction for this JButton !");
-                break;
+        @Override
+        public Component getTreeCellRendererComponent(JTree tree, Object value, boolean sel, boolean expanded, boolean leaf, int row, boolean hasFocus) {
+            super.getTreeCellRendererComponent(tree, value, sel, expanded, leaf, row, hasFocus);
+    
+            // decide what icons you want by examining the node
+            if (value instanceof DefaultMutableTreeNode) {
+                DefaultMutableTreeNode node = (DefaultMutableTreeNode) value;
+                if (node.getUserObject() instanceof String) {
+                    // Root                   
+                    setIcon(UIManager.getIcon("FileView.computerIcon"));
+                } else if (node.getUserObject() instanceof FileOrFolderNode) {
+                    // No root
+                    FileOrFolderNode contact = (FileOrFolderNode)  node.getUserObject();
+                    if (contact.isFolder) {
+                        setIcon(UIManager.getIcon("FileView.directoryIcon"));
+                    } else {
+                        setIcon(UIManager.getIcon("FileView.fileIcon"));
+                    }
+                }
+            }
+            return this;
         }
     }
 }
