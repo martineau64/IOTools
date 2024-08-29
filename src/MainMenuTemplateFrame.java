@@ -32,7 +32,7 @@ import java.awt.Color;
 /**
  * Class allowing you to display a frame with interactive borders.
  */
-public class TemplateFrame extends JFrame implements ActionListener {
+public class MainMenuTemplateFrame implements ActionListener {
     
     protected JPanel MAINPANEL = new JPanel();
     protected JScrollPane MAINSCROLLPANE = new JScrollPane(MAINPANEL, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
@@ -167,8 +167,7 @@ public class TemplateFrame extends JFrame implements ActionListener {
     // ******************************** MAIN PART ******************************** //
 
     
-    public TemplateFrame() {
-        super();
+    public MainMenuTemplateFrame(JFrame mainFrame) {
         // Define default frame parameters
         this.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         this.setLayout(new BorderLayout());

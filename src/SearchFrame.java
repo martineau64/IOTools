@@ -61,6 +61,7 @@ public class SearchFrame extends JFrame implements ActionListener {
     protected String SELECTBUTTONTEXT = "Select";
     protected String BACKBUTTONTEXT = "Back";
     protected String CANCELBUTTONTEXT = "Cancel";
+    
     protected JTextField NEWFOLDERTEXTFIELD = new JTextField();
     protected DefaultMutableTreeNode ROOT = new DefaultMutableTreeNode("root");
     protected DefaultTreeModel FOLDERTREEMODEL = new DefaultTreeModel(ROOT);
