@@ -1,14 +1,12 @@
 package ioTools;
 
-/**
- * See JFileChooser
- */
-
 import java.util.List;
 import java.util.ArrayList;
 import java.io.File;
 
 import java.awt.event.ActionListener;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.awt.event.ActionEvent;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
@@ -78,8 +76,7 @@ public class SearchFrame extends JFrame implements ActionListener {
         FOLDER, FILE
     }
     
-    public SearchFrame()
-    throws IOException {
+    public SearchFrame() {
         super();
         this.CURRENTDIR = System.getProperty("user.dir");
         try {
@@ -102,8 +99,14 @@ public class SearchFrame extends JFrame implements ActionListener {
             this.setVisibleRoot(false);
             this.placeComponents();
             this.update();
+            this.addWindowListener(new WindowAdapter() {
+                public void windowClosing(WindowEvent e) {
+                    closeSearchFrame();
+                }
+            });
         } catch (IOException e) {
-            throw e;
+            System.out.println(e.getMessage());
+            this.dispose();
         }
     }
 

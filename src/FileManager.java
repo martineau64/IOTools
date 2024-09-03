@@ -39,7 +39,7 @@ public class FileManager {
 		}
     }
 
-    public List<String> splitXMLLine(String line)
+    private List<String> splitXMLLine(String line)
     throws IOException {
         List<String> XMLparts = new ArrayList<String>();
         String subLine = line;
@@ -64,7 +64,7 @@ public class FileManager {
         return XMLparts;
     }
 
-    public boolean parseXMLToken(String token, TokenTag expected) {
+    private boolean parseXMLToken(String token, TokenTag expected) {
         int n = token.length();
         boolean result = true;
         switch (expected) {
@@ -94,7 +94,7 @@ public class FileManager {
         }
     }
     
-    public CustomTree<String> parseXMLLine(String line, List<String> XMLparts, CustomTree<String> parent)
+    private CustomTree<String> parseXMLLine(String line, List<String> XMLparts, CustomTree<String> parent)
     throws IOException {
         int n = XMLparts.size();
         switch (n) {
@@ -172,7 +172,7 @@ public class FileManager {
         }
     }
 
-    public String writeXMLNode(CustomTree<String> node, String filePathName) {
+    private String writeXMLNode(CustomTree<String> node, String filePathName) {
         String buffer = "";
         if (!node.isLeaf()) {
             int nodeDepth = node.getNodeDepth();

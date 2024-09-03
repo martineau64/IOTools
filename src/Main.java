@@ -1,7 +1,8 @@
 import java.io.IOException;
 import java.util.ArrayList;
 
-import ioTools.TemplateFrame;
+import ioTools.MainTemplateFrame;
+import ioTools.MainMenuTemplateFrame;
 import ioTools.SearchFrame;
 import ioTools.FileManager;
 
@@ -18,19 +19,17 @@ public class Main {
 		// 	System.out.println(e.getMessage());
 		// }
 		
-		// TemplateFrame newFrame = new TemplateFrame();
-		// ArrayList<String> checkboxes = new ArrayList<String>();
-		// for (int i = 0; i < 3; i++) {
-		// 	checkboxes.add("Element " + Integer.toString(i));
-		// }
-		// newFrame.setSelectBar(80);
-		// newFrame.setLabels("Title", checkboxes);
-		// newFrame.display();
+		// MainTemplateFrame mainFrame = new MainTemplateFrame();
+		// mainFrame.computeDimensions();
 
-		try {
-			SearchFrame s = new SearchFrame();
-		} catch (IOException e) {
-			System.out.println(e.getMessage());
-		}
+		// MainMenuTemplateFrame mainMenu = new MainMenuTemplateFrame(mainFrame);
+		// mainMenu.initialize();
+		// mainMenu.addTitle("Titre");
+        // mainMenu.addButton("A1");
+        // mainMenu.addButton("A2");
+        // mainMenu.addEOFLine();
+        // mainFrame.update();
+
+		new SearchFrame();
 	}
 }

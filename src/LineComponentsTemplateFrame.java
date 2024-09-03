@@ -1,12 +1,7 @@
 package ioTools;
 
-/**
- * https://bbclone.developpez.com/fr/java/tutoriels/uiswing/gridbaglayout/?page=page_3
- */
-
 import java.awt.event.ActionListener;
 import java.awt.event.ActionEvent;
-import javax.swing.JFrame;
 import javax.swing.JPanel;
 import javax.swing.JLabel;
 import javax.swing.JButton;
@@ -28,42 +23,47 @@ import java.awt.Toolkit;
 import java.awt.Dimension;
 import java.awt.Color;
 
+import ioTools.MainTemplateFrame;
+
 
 /**
  * Class allowing you to display a frame with interactive borders.
  */
 public class LineComponentsTemplateFrame implements ActionListener {
     
-    protected JPanel MAINPANEL = new JPanel();
-    protected JScrollPane MAINSCROLLPANE = new JScrollPane(MAINPANEL, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
-    ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
-    protected JPanel SELECTBAR = new JPanel();
+    protected MainTemplateFrame MAINFRAME;
+    protected JPanel MAINPANEL;
+    protected JScrollPane MAINSCROLLPANE;
+    protected JPanel SELECTBAR;
 
-    // First display parameter
+    // First display parameters
     protected double INITIALSCREENFACTOR = 1.3 / 2;
+    protected Color BACKGROUNDCOLOR = new Color(31, 31, 31);
 
     // Buffers
     protected String BUTTONTEXT = "";
 
-    // Main panel parameters
-    protected Color FONTCOLOR = new Color(31, 31, 31);
-    protected String MAINPANELTITLE = "";
+    // Default title parameters
+    protected int TITLEHEIGHT = 50;
     protected int TITLEUPPERINSET = 30;
     protected int TITLELEFTINSET = 10;
-    protected int TITLELOWERINSET = 50;
-    protected int LEFTINSET = 60;
-    protected int RIGHTSPACE = 10;
-    protected int COMPONENTHEIGHT = 40;
-    protected int RIGHTINSET = 10;
-    
-    // Main components parameters
-    protected MainComponents MAINCOMPONENTS = MainComponents.LABEL_ONLY;
-    protected int DEFAULTCHECKBOXSIZE = 21;
     protected Font TITLEFONT = new Font("Comic Sans MS", Font.PLAIN, 24);
-    protected Font MAINCOMPONENTSFONT = new Font("Comic Sans MS", Font.PLAIN, 18);
     protected Color TITLECOLOR = Color.RED;
-    protected Color MAINCOMPONENTSCOLOR = Color.RED;
+
+    // Default components parameters
+    protected MainComponents MAINCOMPONENTS = MainComponents.LABEL_ONLY;
+    protected int COMPONENTHEIGHT = 40;
+    protected int COMPONENTLEFTINSET = 60;
+    protected int COMPONENTRIGHTSPACE = 10;
+    protected int COMPONENTRIGHTINSET = 10;
+    protected Font COMPONENTFONT = new Font("Comic Sans MS", Font.PLAIN, 18);
+    protected Color COMPONENTCOLOR = Color.RED;
+
+    // Default specific components parameters
+    protected int DEFAULTCHECKBOXSIZE = 21;
     protected Color TEXTFIELDCOLOR = Color.BLACK;
+
+    // Main components lists
     protected List<String> LABELS = new ArrayList<String>();
     protected List<JCheckBox> CHECKBOXES = new ArrayList<JCheckBox>();
     protected List<JTextField> TEXTFIELDS = new ArrayList<JTextField>();
@@ -100,13 +100,14 @@ public class LineComponentsTemplateFrame implements ActionListener {
 
     /**
      * Return a JLabel object initiated with the class fields for the title.
+     * @param mainTitle Title to display
      */
-    protected JLabel getMainPanelTitle() {
-        JLabel mainPanelTitleLabel = new JLabel(this.MAINPANELTITLE);
+    protected JLabel getMainPanelTitle(String mainTitle) {
+        JLabel mainPanelTitleLabel = new JLabel(mainTitle);
         mainPanelTitleLabel.setFont(this.TITLEFONT);
-        mainPanelTitleLabel.setForeground(Color.RED);
+        mainPanelTitleLabel.setForeground(this.TITLECOLOR);
         int titleLength = (int) mainPanelTitleLabel.getPreferredSize().getWidth();
-        mainPanelTitleLabel.setPreferredSize(new Dimension(titleLength, this.TITLELOWERINSET));
+        mainPanelTitleLabel.setPreferredSize(new Dimension(titleLength, this.TITLEHEIGHT));
         return mainPanelTitleLabel;
     }
 
@@ -116,8 +117,8 @@ public class LineComponentsTemplateFrame implements ActionListener {
      */
     protected JLabel getLabel(int componentsId) {
         JLabel componentLabel = new JLabel(this.LABELS.get(componentsId));
-        componentLabel.setFont(this.MAINCOMPONENTSFONT);
-        componentLabel.setForeground(Color.RED);
+        componentLabel.setFont(this.COMPONENTFONT);
+        componentLabel.setForeground(COMPONENTCOLOR);
         int labelLength = (int) componentLabel.getPreferredSize().getWidth();
         componentLabel.setPreferredSize(new Dimension(labelLength, this.COMPONENTHEIGHT));
         return componentLabel;
@@ -145,7 +146,8 @@ public class LineComponentsTemplateFrame implements ActionListener {
      */
     protected JTextField getTextField() {
         JTextField componentTextField = new JTextField();
-        componentTextField.setFont(this.MAINCOMPONENTSFONT);
+        componentTextField.setFont(this.COMPONENTFONT);
+        // 100 by default, when value < 100 expected
         componentTextField.setText("100");
         int textFieldLength = (int) componentTextField.getPreferredSize().getWidth();
         componentTextField.setText("");
@@ -157,7 +159,6 @@ public class LineComponentsTemplateFrame implements ActionListener {
     /**
      * Return the String written in the line's TextField.
      * @param componentsId Line associated to the TextField.
-     * @return
      */
     protected String getText(int componentsId) {
         return this.TEXTFIELDS.get(componentsId).getText();
@@ -166,44 +167,41 @@ public class LineComponentsTemplateFrame implements ActionListener {
     
     // ******************************** MAIN PART ******************************** //
 
+
+    public LineComponentsTemplateFrame(MainTemplateFrame mainFrame) {
+        this.MAINFRAME = mainFrame;
+    }
     
-    public LineComponentsTemplateFrame(JFrame mainFrame) {
-        // Define default frame parameters
-        this.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-        this.setLayout(new BorderLayout());
-
-        // Get the frame dimensions and compute its initial location
-        Dimension dimScreen = Toolkit.getDefaultToolkit().getScreenSize();
-        int frameHeight = (int) (this.INITIALSCREENFACTOR * dimScreen.height);
-        int frameWidth = (int) (this.INITIALSCREENFACTOR * dimScreen.width);
-        this.setPreferredSize(new Dimension(frameWidth, frameHeight));
-        this.setLocation((dimScreen.width-frameWidth) / 2, (dimScreen.height-frameHeight) / 2);
+    public void initialize() {
+        this.MAINFRAME.setLayout(new BorderLayout());
         
-        // Create default panels
-        this.SELECTBAR.setBackground(this.SELECTBARCOLOR);
-        this.MAINPANEL.setBackground(this.FONTCOLOR);
-
-        this.SELECTBAR.setLayout(new GridBagLayout());
+        // Create the main panel
+        this.MAINPANEL = new JPanel();
+        this.MAINPANEL.setBackground(this.BACKGROUNDCOLOR);
         this.MAINPANEL.setLayout(new GridBagLayout());
-
+        
+        // Create the scrollbar
+        this.MAINSCROLLPANE = new JScrollPane(MAINPANEL, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
+        ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+        this.MAINSCROLLPANE.getVerticalScrollBar().setUnitIncrement(this.COMPONENTHEIGHT);
+        this.MAINSCROLLPANE.getHorizontalScrollBar().setUnitIncrement(this.COMPONENTRIGHTSPACE);
+        
+        // Create the selection bar
+        this.SELECTBAR = new JPanel();
+        this.SELECTBAR.setBackground(this.SELECTBARCOLOR);
+        this.SELECTBAR.setLayout(new GridBagLayout());
         this.SELECTBAR.setPreferredSize(new Dimension(0, this.SELECTBARHEIGHT));
 
-        // Set ScrollBar increment
-        this.MAINSCROLLPANE.getVerticalScrollBar().setUnitIncrement(this.COMPONENTHEIGHT);
-        this.MAINSCROLLPANE.getHorizontalScrollBar().setUnitIncrement(this.RIGHTSPACE);
-
-        this.add(this.SELECTBAR, BorderLayout.SOUTH);
-        this.add(this.MAINSCROLLPANE, BorderLayout.CENTER);
-
-        this.pack();
+        this.MAINFRAME.addComponent(this.MAINSCROLLPANE);
+        this.MAINFRAME.add(this.MAINSCROLLPANE, BorderLayout.CENTER);
+        this.MAINFRAME.addComponent(this.SELECTBAR);
+        this.MAINFRAME.add(this.SELECTBAR, BorderLayout.SOUTH);
+        this.MAINFRAME.pack();
     }
 
     public void actionPerformed(ActionEvent event) {
         JButton button = (JButton) event.getSource();
         this.BUTTONTEXT = button.getText();
-        if (BUTTONTEXT.equals(this.CANCELBUTTONTEXT)) {
-            this.dispose();
-        }
     }
 
 
@@ -211,28 +209,26 @@ public class LineComponentsTemplateFrame implements ActionListener {
 
 
     /**
-     * Add the checkbox that will be displayed. Each call of this function reinitiate the checkbox list
-     * and move back to its first element.
-     * @param MainPanelTitle Title, displayed first if not empty.
+     * Add the checkbox that will be displayed.
      * @param Labels Labels to display depending on MAINCOMPONENTS.
      */
-    public void setLabels(String MainPanelTitle, List<String> Labels) {
-        this.MAINPANELTITLE = MainPanelTitle;
+    public void setLabels(List<String> Labels) {
         this.LABELS = Labels;
     }
 
     /**
      * Add the title with its coordinates on the main panel.
      * Layout constraints are defined here.
+     * @param mainTitle Title to display
      */
-    protected void addTitle() {
+    protected void addTitle(String mainTitle) {
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.gridx = gbc.gridy = 0;
         gbc.gridwidth = GridBagConstraints.REMAINDER;
         gbc.weightx = 1;
         gbc.anchor = GridBagConstraints.BASELINE_LEADING;
         gbc.insets = new Insets(this.TITLELEFTINSET, this.TITLEUPPERINSET, 0, 0);
-        this.MAINPANEL.add(this.getMainPanelTitle(), gbc);
+        this.MAINPANEL.add(this.getMainPanelTitle(mainTitle), gbc);
     }
     
     /**
@@ -246,7 +242,7 @@ public class LineComponentsTemplateFrame implements ActionListener {
         gbc.anchor = GridBagConstraints.BASELINE_LEADING;
         int upperInset = row == 0 ? this.TITLELEFTINSET : 0;
         int checkboxInset = this.COMPONENTHEIGHT > this.DEFAULTCHECKBOXSIZE ? (this.COMPONENTHEIGHT - this.DEFAULTCHECKBOXSIZE) / 2 : 0;
-        gbc.insets = new Insets(upperInset, this.LEFTINSET, 0, 0);
+        gbc.insets = new Insets(upperInset, this.COMPONENTLEFTINSET, 0, 0);
         switch (this.MAINCOMPONENTS) {
             case LABEL_ONLY:
                 gbc.gridwidth = GridBagConstraints.REMAINDER;    
@@ -258,7 +254,7 @@ public class LineComponentsTemplateFrame implements ActionListener {
                 gbc.gridwidth = GridBagConstraints.REMAINDER;
                 gbc.gridx = 1;
                 gbc.weightx = 1;
-                gbc.insets = new Insets(upperInset, this.RIGHTSPACE, 0, 0);
+                gbc.insets = new Insets(upperInset, this.COMPONENTRIGHTSPACE, 0, 0);
                 this.MAINPANEL.add(this.getLabel(componentsId), gbc);
                 break;
             case END_LINE_CHECKBOX:
@@ -267,16 +263,16 @@ public class LineComponentsTemplateFrame implements ActionListener {
                 gbc.gridwidth = GridBagConstraints.REMAINDER;
                 gbc.gridx = 1;
                 gbc.weightx = 0;
-                gbc.insets = new Insets(upperInset, this.RIGHTSPACE, 0, this.RIGHTINSET);
+                gbc.insets = new Insets(upperInset, this.COMPONENTRIGHTSPACE, 0, this.COMPONENTRIGHTINSET);
                 this.MAINPANEL.add(this.getCheckBox(), gbc);
                 break;
             case TEXTFIELD:
-                gbc.insets = new Insets(upperInset, this.LEFTINSET, 0, 0);
+                gbc.insets = new Insets(upperInset, this.COMPONENTLEFTINSET, 0, 0);
                 this.MAINPANEL.add(this.getTextField(), gbc);
                 gbc.gridwidth = GridBagConstraints.REMAINDER;
                 gbc.gridx = 1;
                 gbc.weightx = 1;
-                gbc.insets = new Insets(upperInset, this.RIGHTSPACE, 0, 0);
+                gbc.insets = new Insets(upperInset, this.COMPONENTRIGHTSPACE, 0, 0);
                 this.MAINPANEL.add(this.getLabel(componentsId), gbc);
                 break;
             default:
@@ -289,7 +285,7 @@ public class LineComponentsTemplateFrame implements ActionListener {
      * to have every line evenly spaced.
      * @param row Y-coordinate of the space in the GridBagLayout
      */
-    void addEOFLine(int row) {
+    protected void addEOFLine(int row) {
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.gridx = 0;
         gbc.gridy = row;
@@ -301,12 +297,13 @@ public class LineComponentsTemplateFrame implements ActionListener {
     /**
      * Add every lines to the main panel, starting with the title.
      * Add Labels, Checkboxes or textField according to MAINCOMPONENTS.
+     * @param mainTitle Title to display
      */
-    protected void addMainComponents() {
+    protected void addMainComponents(String mainTitle) {
         int printedRow = 0;
-        if (!this.MAINPANELTITLE.equals("")) {
+        if (!mainTitle.equals("")) {
             // Display main title
-            this.addTitle();
+            this.addTitle(mainTitle);
             printedRow++;
         }
         for (int componentsId = 0; componentsId < this.LABELS.size(); componentsId++) {
@@ -386,28 +383,5 @@ public class LineComponentsTemplateFrame implements ActionListener {
         gbc.insets = new Insets(0, this.SELECTBARSPACE, 0, this.SELECTBARINSET);
         this.SELECTBAR.add(cancelButton, gbc);
         this.CANCELBUTTONADDED = true;
-    }
-
-
-    // ******************************** USE EXAMPLE ******************************** //
-
-
-    /**
-     * Display the defined content.
-     */
-    public void display() {
-        this.setMainComponents(MainComponents.TEXTFIELD);
-        this.addMainComponents();
-        try {
-            this.addLeftButton("button 1");
-            this.addLeftButton("button 2");
-            this.addCancelButton();
-        } catch (IOException e) {
-            System.out.println(e.getMessage());
-        }
-
-        this.revalidate();
-        this.repaint();
-        this.setVisible(true);
     }
 }
