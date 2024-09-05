@@ -1,6 +1,8 @@
 all:
-	javac -d ../lib ../src/TemplateFrame.java
 	javac -d ../lib ../src/SearchFrame.java
+	javac -d ../lib ../src/MainTemplateFrame.java
+	javac -cp ../lib -d ../lib ../src/MainMenuTemplateFrame.java
+	javac -cp ../lib -d ../lib ../src/LineComponentsTemplateFrame.java
 	javac -cp ../sourcelibs -d ../lib ../src/FileManager.java
 	javac -cp ../sourcelibs:../lib -d . ../src/Main.java
 	
@@ -15,7 +17,8 @@ runTest:
 	# Add Unit Testing: java -cp ../target:../lib [TestName]
 
 doc:
-	javadoc -d ../doc ../src/*
+	javadoc -cp ../lib:../sourcelibs -d ../doc ../src/MainTemplateFrame.java ../src/SearchFrame.java ../src/MainMenuTemplateFrame.java \
+	../src/LineComponentsTemplateFrame.java ../src/FileManager.java
 
 clean:
 	rm -f *.class

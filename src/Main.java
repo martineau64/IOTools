@@ -30,6 +30,9 @@ public class Main {
         // mainMenu.addEOFLine();
         // mainFrame.update();
 
-		new SearchFrame();
+		SearchFrame frame = new SearchFrame();
+		frame.setCreateFile(true);
+		frame.setExpectedType("folder");
+		frame.initialize();
 	}
 }

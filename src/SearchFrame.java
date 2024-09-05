@@ -54,13 +54,16 @@ public class SearchFrame extends JFrame implements ActionListener {
     protected String CHOOSEFOLDERTEXT = "Choose Folder :";
     protected String CHOOSEFILETEXT = "Choose File :";
     protected String MAKEFOLDERTEXT = "New Folder :";
-    protected String CREATEBUTTONTEXT = "Create";
+    protected String MAKEFILETEXT = "New File :";
+    protected String CREATEFOLDERBUTTONTEXT = "OK";
+    protected String CREATEFILEBUTTONTEXT = " OK ";
     protected String OPENBUTTONTEXT = "Open";
     protected String SELECTBUTTONTEXT = "Select";
     protected String BACKBUTTONTEXT = "Back";
     protected String CANCELBUTTONTEXT = "Cancel";
     
     protected JTextField NEWFOLDERTEXTFIELD = new JTextField();
+    protected JTextField NEWFILETEXTFIELD = new JTextField();
     protected DefaultMutableTreeNode ROOT = new DefaultMutableTreeNode("root");
     protected DefaultTreeModel FOLDERTREEMODEL = new DefaultTreeModel(ROOT);
     protected JTree FOLDERTREE = new JTree(FOLDERTREEMODEL);
@@ -70,6 +73,9 @@ public class SearchFrame extends JFrame implements ActionListener {
 
     protected String SELECTED = "";
     protected ChooseType EXPECTEDTYPE = ChooseType.FILE;
+    protected boolean CANCREATEFILE = false;
+
+    protected String ERROR = "";
 
 
     protected enum ChooseType {
@@ -78,6 +84,9 @@ public class SearchFrame extends JFrame implements ActionListener {
     
     public SearchFrame() {
         super();
+    }
+
+    public void initialize() {
         this.CURRENTDIR = System.getProperty("user.dir");
         try {
             this.getFilesAndDirectories();
@@ -106,7 +115,8 @@ public class SearchFrame extends JFrame implements ActionListener {
             });
         } catch (IOException e) {
             System.out.println(e.getMessage());
-            this.dispose();
+            this.ERROR = e.getMessage();
+            this.closeSearchFrame();
         }
     }
 
@@ -117,8 +127,22 @@ public class SearchFrame extends JFrame implements ActionListener {
         }
     }
 
-    protected void setExpectedType(ChooseType type) {
-        this.EXPECTEDTYPE = type;
+    public void setExpectedType(String type) {
+        switch (type.toLowerCase().trim()) {
+            case "folder":
+                this.EXPECTEDTYPE = ChooseType.FOLDER;
+                break;
+            case "file":
+                this.EXPECTEDTYPE = ChooseType.FILE;
+                break;
+            default:
+                break;
+        }
+        
+    }
+
+    public void setCreateFile(boolean canCreateFile) {
+        this.CANCREATEFILE = canCreateFile;
     }
 
     /**
@@ -181,8 +205,11 @@ public class SearchFrame extends JFrame implements ActionListener {
             chooseLabel.setText(this.CHOOSEFOLDERTEXT);
         }
         JLabel newFolderLabel = new JLabel(this.MAKEFOLDERTEXT);
-        JButton createFolderButton = new JButton(this.CREATEBUTTONTEXT);
+        JButton createFolderButton = new JButton(this.CREATEFOLDERBUTTONTEXT);
         createFolderButton.addActionListener(this);
+        JLabel newFileLabel = new JLabel(this.MAKEFILETEXT);
+        JButton createFileButton = new JButton(this.CREATEFILEBUTTONTEXT);
+        createFileButton.addActionListener(this);
         JButton openButton = new JButton(this.OPENBUTTONTEXT);
         openButton.addActionListener(this);
         JButton selectButton = new JButton(this.SELECTBUTTONTEXT);
@@ -201,6 +228,8 @@ public class SearchFrame extends JFrame implements ActionListener {
         Dimension minimumDimension = new Dimension(minimumWidth, minimumHeight);
         createFolderButton.setPreferredSize(preferredDimension);
         createFolderButton.setMinimumSize(minimumDimension);
+        createFileButton.setPreferredSize(preferredDimension);
+        createFileButton.setMinimumSize(minimumDimension);
         openButton.setPreferredSize(preferredDimension);
         openButton.setMinimumSize(minimumDimension);
         selectButton.setPreferredSize(preferredDimension);
@@ -212,20 +241,24 @@ public class SearchFrame extends JFrame implements ActionListener {
 
         // Place each item
         GridBagConstraints gbc = new GridBagConstraints();
+
+        int nbLines = 0;
         
-        gbc.gridx = gbc.gridy = 0;
+        gbc.gridx = gbc.gridy = nbLines;
         gbc.gridwidth = GridBagConstraints.REMAINDER;
         gbc.anchor = GridBagConstraints.BASELINE_LEADING;
         gbc.insets = new Insets(this.BORDERSPACE, this.BORDERSPACE, 0, this.BORDERSPACE);
         this.add(chooseLabel, gbc);
+        nbLines++;
 
-        gbc.gridy = 1;
+        gbc.gridy = nbLines;
         gbc.weightx = gbc.weighty = 1;
         gbc.fill = GridBagConstraints.BOTH;
         gbc.insets = new Insets(this.HSPACE, this.BORDERSPACE, 0, this.BORDERSPACE);
         this.add(this.SCROLLPANE, gbc);
+        nbLines++;
 
-        gbc.gridy = 2;
+        gbc.gridy = nbLines;
         gbc.gridwidth = 1;
         gbc.weightx = gbc.weighty = 0;
         gbc.fill = GridBagConstraints.NONE;
@@ -245,9 +278,35 @@ public class SearchFrame extends JFrame implements ActionListener {
         gbc.anchor = GridBagConstraints.BASELINE_TRAILING;
         gbc.insets = new Insets(0, this.VSPACE, 0, this.BORDERSPACE);
         this.add(createFolderButton, gbc);
+        nbLines++;
+
+        if (this.CANCREATEFILE && !this.EXPECTEDTYPE.equals(ChooseType.FOLDER)) {
+            gbc.gridx = 0;
+            gbc.gridy = nbLines;
+            gbc.gridwidth = 1;
+            gbc.weightx = gbc.weighty = 0;
+            gbc.fill = GridBagConstraints.NONE;
+            gbc.insets = new Insets(this.HSPACE, this.BORDERSPACE, 0, 0);
+            this.add(newFileLabel, gbc);
+
+            gbc.gridx = 1;
+            gbc.gridwidth = GridBagConstraints.RELATIVE;
+            gbc.fill = GridBagConstraints.HORIZONTAL;
+            gbc.anchor = GridBagConstraints.BASELINE;
+            gbc.insets = new Insets(0, this.VSPACE, 0, 0);
+            this.add(this.NEWFILETEXTFIELD, gbc);
+
+            gbc.gridx = 3;
+            gbc.gridwidth = GridBagConstraints.REMAINDER;
+            gbc.weightx = 0;
+            gbc.anchor = GridBagConstraints.BASELINE_TRAILING;
+            gbc.insets = new Insets(0, this.VSPACE, 0, this.BORDERSPACE);
+            this.add(createFileButton, gbc);
+            nbLines++;
+        }
 
         gbc.gridx = 0;
-        gbc.gridy = 3;
+        gbc.gridy = nbLines;
         gbc.gridwidth = 1;
         gbc.anchor = GridBagConstraints.BASELINE_LEADING;
         gbc.fill = GridBagConstraints.NONE;
@@ -281,7 +340,7 @@ public class SearchFrame extends JFrame implements ActionListener {
     /**
      * To override, to call when leaving the SearchFrame.
      */
-    public void closeSearchFrame() {
+    protected void closeSearchFrame() {
         this.dispose();
     }
 
@@ -292,7 +351,7 @@ public class SearchFrame extends JFrame implements ActionListener {
             this.SELECTED = "";
             this.closeSearchFrame();
         }
-        if (this.BUTTONTEXT.equals(this.CREATEBUTTONTEXT)) {
+        if (this.BUTTONTEXT.equals(this.CREATEFOLDERBUTTONTEXT)) {
             if (!this.NEWFOLDERTEXTFIELD.getText().isBlank()) {
                 String newFolderName = this.NEWFOLDERTEXTFIELD.getText();
                 String newDirectory = this.CURRENTDIR + "/" + newFolderName;
@@ -303,9 +362,28 @@ public class SearchFrame extends JFrame implements ActionListener {
                     this.update();
                 } catch (IOException e) {
                     System.out.println(e.getMessage());
+                    this.ERROR = e.getMessage();
+                    this.closeSearchFrame();
                 }
             }
             this.NEWFOLDERTEXTFIELD.setText("");
+        }
+        if (this.BUTTONTEXT.equals(this.CREATEFILEBUTTONTEXT)) {
+            if (!this.NEWFILETEXTFIELD.getText().isBlank()) {
+                String newFileName = this.NEWFILETEXTFIELD.getText();
+                String newFullName = this.CURRENTDIR + "/" + newFileName;
+                try {
+                    Files.createFile(Paths.get(newFullName));
+                    this.getFilesAndDirectories();
+                    this.buildJTree();
+                    this.update();
+                } catch (IOException e) {
+                    System.out.println(e.getMessage());
+                    this.ERROR = e.getMessage();
+                    this.closeSearchFrame();
+                }
+            }
+            this.NEWFILETEXTFIELD.setText("");
         }
         if (this.BUTTONTEXT.equals(this.OPENBUTTONTEXT)) {
             DefaultMutableTreeNode node = (DefaultMutableTreeNode) this.FOLDERTREE.getLastSelectedPathComponent();
@@ -319,6 +397,8 @@ public class SearchFrame extends JFrame implements ActionListener {
                         this.update();
                     } catch (IOException e) {
                         System.out.println(e.getMessage());
+                        this.ERROR = e.getMessage();
+                        this.closeSearchFrame();
                     }
                 }
             }
@@ -343,12 +423,14 @@ public class SearchFrame extends JFrame implements ActionListener {
                 this.update();
             } catch (IOException e) {
                 System.out.println(e.getMessage());
+                this.ERROR = e.getMessage();
+                this.closeSearchFrame();
             }
         }
     }
 
 
-    private static class FileOrFolderNode {
+    protected static class FileOrFolderNode {
 
         private String name;
         private boolean isFolder = true;
@@ -377,7 +459,7 @@ public class SearchFrame extends JFrame implements ActionListener {
     }
 
 
-    private static class MyTreeCellRenderer extends DefaultTreeCellRenderer {
+    protected static class MyTreeCellRenderer extends DefaultTreeCellRenderer {
 
         @Override
         public Component getTreeCellRendererComponent(JTree tree, Object value, boolean sel, boolean expanded, boolean leaf, int row, boolean hasFocus) {
