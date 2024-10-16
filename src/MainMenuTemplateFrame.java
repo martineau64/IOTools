@@ -1,7 +1,6 @@
 package ioTools;
 
 import java.awt.event.ActionListener;
-import java.awt.event.ActionEvent;
 import javax.swing.JPanel;
 import javax.swing.JLabel;
 import javax.swing.JButton;
@@ -24,7 +23,7 @@ import ioTools.MainTemplateFrame;
 /**
  * Class allowing you to display a menu frame.
  */
-public class MainMenuTemplateFrame implements ActionListener {
+public class MainMenuTemplateFrame {
     
     protected MainTemplateFrame MAINFRAME;
     protected JPanel MAINPANEL;
@@ -46,14 +45,14 @@ public class MainMenuTemplateFrame implements ActionListener {
     
     // Default buttons parameters
     protected int BUTTONHEIGHT = 40;
-    protected int BUTTONLENGTH = 150;
+    protected int BUTTONMINWIDTH = 150;
     protected int BUTTONUPPERLOWERINSET = 10;
     protected Font BUTTONFONT = new Font("Comic Sans MS", Font.PLAIN, 18);
     protected Color BUTTONCOLOR = Color.WHITE;
     protected Color BUTTONTEXTCOLOR = Color.BLACK;
 
 
-    // ******************************** CONFIGURATIONS ******************************** //
+    // ******************************** PRECONFIGURED COMPONENTS ******************************** //
 
 
     /**
@@ -74,25 +73,22 @@ public class MainMenuTemplateFrame implements ActionListener {
      * Return a JButton object initiated with the given text.
      * @param buttonText Text to display on the button.
      */
-    protected JButton getMainPanelButton(String buttonText) {
+    protected JButton getMainPanelButton(String buttonText, ActionListener actionListener) {
         JButton button = new JButton(buttonText);
         button.setFont(this.BUTTONFONT);
         button.setBackground(this.BUTTONCOLOR);
         button.setForeground(this.BUTTONTEXTCOLOR);
-        button.setPreferredSize(new Dimension(this.BUTTONLENGTH, this.BUTTONHEIGHT));
-        button.addActionListener(this);
+        int preferredWidth = (int) button.getPreferredSize().getWidth();
+        if (this.BUTTONMINWIDTH > preferredWidth) {
+            preferredWidth = this.BUTTONMINWIDTH;
+        }
+        button.setPreferredSize(new Dimension(preferredWidth, this.BUTTONHEIGHT));
+        button.setMinimumSize(new Dimension(preferredWidth, this.BUTTONHEIGHT));
+        button.addActionListener(actionListener);
         return button;
     }
 
 
-    // ******************************** MAIN PART ******************************** //
-
-
-    public MainTemplateFrame getMainFrame() {
-        return this.MAINFRAME;
-    }
-
-    
     // ******************************** MAIN PART ******************************** //
 
 
@@ -116,17 +112,13 @@ public class MainMenuTemplateFrame implements ActionListener {
         this.MAINFRAME.addComponent(this.MAINSCROLLPANE);
         this.MAINFRAME.add(this.MAINSCROLLPANE, BorderLayout.CENTER);
         this.MAINFRAME.pack();
+        this.MAINFRAME.setLocationRelativeTo(null);
 
         this.PRINTEDROW = 0;
     }
 
-    public void actionPerformed(ActionEvent event) {
-        JButton button = (JButton) event.getSource();
-        this.BUTTONTEXT = button.getText();
-    }
 
-
-    // ******************************** LABELS ******************************** //
+    // ******************************** COMPONENTS LAYOUT ******************************** //
 
 
     /**
@@ -134,7 +126,7 @@ public class MainMenuTemplateFrame implements ActionListener {
      * Layout constraints are defined here.
      * @param mainTitle Title to add
      */
-    protected void addTitle(String mainTitle) {
+    public void addTitle(String mainTitle) {
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.gridx = gbc.gridy = 0;
         gbc.gridwidth = GridBagConstraints.REMAINDER;
@@ -149,7 +141,7 @@ public class MainMenuTemplateFrame implements ActionListener {
      * Add a new button to the frame. Must be done before calling addEOFLine.
      * @param buttonText Text to display on the button.
      */
-    protected void addButton(String buttonText) {
+    public void addButton(String buttonText, ActionListener actionListener) {
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.gridx = 0;
         gbc.gridy = this.PRINTEDROW;
@@ -157,7 +149,7 @@ public class MainMenuTemplateFrame implements ActionListener {
         gbc.gridwidth = GridBagConstraints.REMAINDER;
         gbc.anchor = GridBagConstraints.BASELINE;
         gbc.insets = new Insets(this.BUTTONUPPERLOWERINSET, 0, this.BUTTONUPPERLOWERINSET, 0);
-        this.MAINPANEL.add(this.getMainPanelButton(buttonText), gbc);
+        this.MAINPANEL.add(this.getMainPanelButton(buttonText, actionListener), gbc);
         this.PRINTEDROW++;
     }
 
@@ -165,7 +157,7 @@ public class MainMenuTemplateFrame implements ActionListener {
      * Add an empty weighted space at the end of the main panel
      * to have every line evenly spaced.
      */
-    protected void addEOFLine() {
+    public void addEOFLine() {
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.gridx = 0;
         gbc.gridy = this.PRINTEDROW;

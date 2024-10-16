@@ -1,9 +1,11 @@
 all:
-	javac -d ../lib ../src/SearchFrame.java
 	javac -d ../lib ../src/MainTemplateFrame.java
+	javac -d ../lib ../src/SearchFrame.java
 	javac -cp ../lib -d ../lib ../src/MainMenuTemplateFrame.java
 	javac -cp ../lib -d ../lib ../src/LineComponentsTemplateFrame.java
 	javac -cp ../sourcelibs -d ../lib ../src/FileManager.java
+	javac -cp ../sourcelibs:../lib -d ../lib ../src/TemplateManager.java
+
 	javac -cp ../sourcelibs:../lib -d . ../src/Main.java
 	
 
@@ -22,6 +24,6 @@ doc:
 
 clean:
 	rm -f *.class
-	rm -f -R ../doc/*
-	rm -f -R ../lib/*
-	rm -f -R ../target/*
+	rm -rf ../doc/*
+	rm -rf ../lib/*
+	rm -rf ../target/*

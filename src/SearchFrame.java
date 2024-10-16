@@ -5,9 +5,8 @@ import java.util.ArrayList;
 import java.io.File;
 
 import java.awt.event.ActionListener;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
 import java.awt.event.ActionEvent;
+import java.awt.event.WindowEvent;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.tree.DefaultMutableTreeNode;
@@ -38,89 +37,71 @@ import java.nio.file.Paths;
  */
 public class SearchFrame extends JFrame implements ActionListener {
     
-    protected String CURRENTDIR;
-    protected List<String> CURRENTFILES = new ArrayList<String>();
-    protected List<String> CURRENTFOLDERS = new ArrayList<String>();
-    protected int FRAMEHEIGHT;
-    protected int FRAMEWIDTH;
+    private String CURRENTDIR;
+    private List<String> CURRENTFILES = new ArrayList<String>();
+    private List<String> CURRENTFOLDERS = new ArrayList<String>();
+    private int FRAMEHEIGHT;
+    private int FRAMEWIDTH;
 
-    protected double INITIALSCREENFACTOR = 1.3 / 2;
-    protected Color FONTCOLOR = new Color(31, 31, 31);
+    private double INITIALSCREENFACTOR = 1.3 / 2;
+    private Color FONTCOLOR = new Color(31, 31, 31);
 
-    protected int BORDERSPACE = 10;
-    protected int VSPACE = 15;
-    protected int HSPACE = 15;
+    private int BORDERSPACE = 10;
+    private int VSPACE = 15;
+    private int HSPACE = 15;
 
-    protected String CHOOSEFOLDERTEXT = "Choose Folder :";
-    protected String CHOOSEFILETEXT = "Choose File :";
-    protected String MAKEFOLDERTEXT = "New Folder :";
-    protected String MAKEFILETEXT = "New File :";
-    protected String CREATEFOLDERBUTTONTEXT = "OK";
-    protected String CREATEFILEBUTTONTEXT = " OK ";
-    protected String OPENBUTTONTEXT = "Open";
-    protected String SELECTBUTTONTEXT = "Select";
-    protected String BACKBUTTONTEXT = "Back";
-    protected String CANCELBUTTONTEXT = "Cancel";
+    private String CHOOSEFOLDERTEXT = "Choose Folder :";
+    private String CHOOSEFILETEXT = "Choose File :";
+    private String MAKEFOLDERTEXT = "New Folder :";
+    private String MAKEFILETEXT = "New File :";
+    private String CREATEFOLDERBUTTONTEXT = "OK";
+    private String CREATEFILEBUTTONTEXT = " OK ";
+    private String OPENBUTTONTEXT = "Open";
+    private String SELECTBUTTONTEXT = "Select";
+    private String BACKBUTTONTEXT = "Back";
+    private String CANCELBUTTONTEXT = "Cancel";
     
-    protected JTextField NEWFOLDERTEXTFIELD = new JTextField();
-    protected JTextField NEWFILETEXTFIELD = new JTextField();
-    protected DefaultMutableTreeNode ROOT = new DefaultMutableTreeNode("root");
-    protected DefaultTreeModel FOLDERTREEMODEL = new DefaultTreeModel(ROOT);
-    protected JTree FOLDERTREE = new JTree(FOLDERTREEMODEL);
-    protected JScrollPane SCROLLPANE = new JScrollPane(FOLDERTREE);
+    private JTextField NEWFOLDERTEXTFIELD = new JTextField();
+    private JTextField NEWFILETEXTFIELD = new JTextField();
+    private DefaultMutableTreeNode ROOT = new DefaultMutableTreeNode("root");
+    private DefaultTreeModel FOLDERTREEMODEL = new DefaultTreeModel(ROOT);
+    private JTree FOLDERTREE = new JTree(FOLDERTREEMODEL);
+    private JScrollPane SCROLLPANE = new JScrollPane(FOLDERTREE);
 
-    protected String BUTTONTEXT = "";
+    private String BUTTONTEXT = "";
 
-    protected String SELECTED = "";
-    protected ChooseType EXPECTEDTYPE = ChooseType.FILE;
-    protected boolean CANCREATEFILE = false;
+    private String SELECTED = "";
+    private ChooseType EXPECTEDTYPE = ChooseType.FILE;
+    private boolean CANCREATEFILE = false;
 
-    protected String ERROR = "";
+    private String ERROR = "";
 
 
-    protected enum ChooseType {
+    private enum ChooseType {
         FOLDER, FILE
     }
+
+
+    // ******************************** GETTERS / SETTERS ******************************** //
+
+
+    public String getCurrentDirectory() {
+        return this.CURRENTDIR;
+    }
+
+    public List<String> getCurrentFiles() {
+        return this.CURRENTFILES;
+    }
+
+    public List<String> getCurrentFolders() {
+        return this.CURRENTFOLDERS;
+    }
+
+    public String getSelected() {
+        return this.SELECTED;
+    }
     
-    public SearchFrame() {
-        super();
-    }
-
-    public void initialize() {
-        this.CURRENTDIR = System.getProperty("user.dir");
-        try {
-            this.getFilesAndDirectories();
-            this.buildJTree();
-            this.FOLDERTREE.setCellRenderer(new MyTreeCellRenderer());
-
-            // Define default frame parameters
-            this.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-            this.setLayout(new GridBagLayout());
-
-            // Get the frame dimensions and compute its initial location
-            Dimension dimScreen = Toolkit.getDefaultToolkit().getScreenSize();
-            int FRAMEHEIGHT = (int) (this.INITIALSCREENFACTOR * dimScreen.height);
-            int FRAMEWIDTH = (int) (this.INITIALSCREENFACTOR * dimScreen.width);
-            this.setPreferredSize(new Dimension(FRAMEWIDTH, FRAMEHEIGHT));
-            this.setLocation((dimScreen.width-FRAMEWIDTH) / 2, (dimScreen.height-FRAMEHEIGHT) / 2);
-            this.pack();
-
-            this.setVisibleRoot(false);
-            this.placeComponents();
-            this.update();
-            this.addWindowListener(new WindowAdapter() {
-                public void windowClosing(WindowEvent e) {
-                    closeSearchFrame();
-                }
-            });
-        } catch (IOException e) {
-            System.out.println(e.getMessage());
-            this.ERROR = e.getMessage();
-            this.closeSearchFrame();
-        }
-    }
-
-    protected void setVisibleRoot(boolean showRoot) {
+    public void setVisibleRoot(boolean showRoot) {
         if (!showRoot) {
             this.FOLDERTREE.expandRow(0);
             this.FOLDERTREE.setRootVisible(false);
@@ -144,6 +125,144 @@ public class SearchFrame extends JFrame implements ActionListener {
     public void setCreateFile(boolean canCreateFile) {
         this.CANCREATEFILE = canCreateFile;
     }
+    
+    
+    // ******************************** MAIN PART ******************************** //
+
+    
+    public SearchFrame() {
+        super();
+    }
+
+    public void initialize() {
+        this.CURRENTDIR = System.getProperty("user.dir");
+        try {
+            this.getFilesAndDirectories();
+            this.buildJTree();
+            this.FOLDERTREE.setCellRenderer(new MyTreeCellRenderer());
+            this.setVisibleRoot(false);
+
+            // Define default frame parameters
+            this.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+            this.setLayout(new GridBagLayout());
+
+            // Get the frame dimensions and compute its initial location
+            Dimension dimScreen = Toolkit.getDefaultToolkit().getScreenSize();
+            int FRAMEHEIGHT = (int) (this.INITIALSCREENFACTOR * dimScreen.height);
+            int FRAMEWIDTH = (int) (this.INITIALSCREENFACTOR * dimScreen.width);
+            this.setPreferredSize(new Dimension(FRAMEWIDTH, FRAMEHEIGHT));
+            this.setLocation((dimScreen.width-FRAMEWIDTH) / 2, (dimScreen.height-FRAMEHEIGHT) / 2);
+            this.pack();
+        } catch (IOException e) {
+            System.out.println(e.getMessage());
+            this.ERROR = e.getMessage();
+            this.closeSearchFrame();
+        }
+    }
+
+    public void display() {
+        this.placeComponents();
+        this.update();
+    }
+
+    public void update() {
+        this.revalidate();
+        this.repaint();
+        this.setVisible(true);
+    }
+
+    private void closeSearchFrame() {
+        this.dispatchEvent(new WindowEvent(this, WindowEvent.WINDOW_CLOSING));
+    }
+
+    public void actionPerformed(ActionEvent event) {
+        JButton button = (JButton) event.getSource();
+        this.BUTTONTEXT = button.getText();
+        if (this.BUTTONTEXT.equals(this.CANCELBUTTONTEXT)) {
+            this.SELECTED = "";
+            this.closeSearchFrame();
+        }
+        if (this.BUTTONTEXT.equals(this.CREATEFOLDERBUTTONTEXT)) {
+            if (!this.NEWFOLDERTEXTFIELD.getText().isBlank()) {
+                String newFolderName = this.NEWFOLDERTEXTFIELD.getText();
+                String newDirectory = this.CURRENTDIR + "/" + newFolderName;
+                try {
+                    Files.createDirectories(Paths.get(newDirectory));
+                    this.getFilesAndDirectories();
+                    this.buildJTree();
+                    this.update();
+                } catch (IOException e) {
+                    System.out.println(e.getMessage());
+                    this.ERROR = e.getMessage();
+                    this.closeSearchFrame();
+                }
+            }
+            this.NEWFOLDERTEXTFIELD.setText("");
+        }
+        if (this.BUTTONTEXT.equals(this.CREATEFILEBUTTONTEXT)) {
+            if (!this.NEWFILETEXTFIELD.getText().isBlank()) {
+                String newFileName = this.NEWFILETEXTFIELD.getText();
+                String newFullName = this.CURRENTDIR + "/" + newFileName;
+                try {
+                    Files.createFile(Paths.get(newFullName));
+                    this.getFilesAndDirectories();
+                    this.buildJTree();
+                    this.update();
+                } catch (IOException e) {
+                    System.out.println(e.getMessage());
+                    this.ERROR = e.getMessage();
+                    this.closeSearchFrame();
+                }
+            }
+            this.NEWFILETEXTFIELD.setText("");
+        }
+        if (this.BUTTONTEXT.equals(this.OPENBUTTONTEXT)) {
+            DefaultMutableTreeNode node = (DefaultMutableTreeNode) this.FOLDERTREE.getLastSelectedPathComponent();
+            if (node != null) {
+                FileOrFolderNode selectedNode = (FileOrFolderNode) node.getUserObject();
+                if (selectedNode.isFolder()) {
+                    try {
+                        this.CURRENTDIR += "/" + selectedNode.getName();
+                        this.getFilesAndDirectories();
+                        this.buildJTree();
+                        this.update();
+                    } catch (IOException e) {
+                        System.out.println(e.getMessage());
+                        this.ERROR = e.getMessage();
+                        this.closeSearchFrame();
+                    }
+                }
+            }
+        }
+        if (this.BUTTONTEXT.equals(this.SELECTBUTTONTEXT)) {
+            DefaultMutableTreeNode node = (DefaultMutableTreeNode) this.FOLDERTREE.getLastSelectedPathComponent();
+            if (node != null) {
+                FileOrFolderNode selectedNode = (FileOrFolderNode) node.getUserObject();
+                boolean condition = selectedNode.isFolder() && this.EXPECTEDTYPE.equals(ChooseType.FOLDER);
+                condition = condition || (!selectedNode.isFolder() && this.EXPECTEDTYPE.equals(ChooseType.FILE));
+                if (condition) {
+                    this.SELECTED = this.CURRENTDIR + "/" + selectedNode.getName();
+                    this.closeSearchFrame();
+                }
+            }
+        }
+        if (this.BUTTONTEXT.equals(this.BACKBUTTONTEXT)) {
+            try {
+                this.CURRENTDIR += "/..";
+                this.getFilesAndDirectories();
+                this.buildJTree();
+                this.update();
+            } catch (IOException e) {
+                System.out.println(e.getMessage());
+                this.ERROR = e.getMessage();
+                this.closeSearchFrame();
+            }
+        }
+    }
+
+
+    // ******************************** FILES RELATED ******************************** //
+
 
     /**
      * Get all files and subdirectoriers in CURRENTFILES and CURRENTFOLDERS
@@ -167,7 +286,7 @@ public class SearchFrame extends JFrame implements ActionListener {
         this.CURRENTFOLDERS.sort(String::compareToIgnoreCase);
     }
 
-    protected void buildJTree() {
+    private void buildJTree() {
         this.ROOT.removeAllChildren();
         for (String folder : this.CURRENTFOLDERS) {
             DefaultMutableTreeNode folderNode = new DefaultMutableTreeNode(new FileOrFolderNode(folder, true));
@@ -182,21 +301,9 @@ public class SearchFrame extends JFrame implements ActionListener {
         this.FOLDERTREEMODEL.reload();
     }
 
-    public String getCurrentDirectory() {
-        return this.CURRENTDIR;
-    }
 
-    public List<String> getCurrentFiles() {
-        return this.CURRENTFILES;
-    }
+    // ******************************** COMPONENTS LAYOUT ******************************** //
 
-    public List<String> getCurrentFolders() {
-        return this.CURRENTFOLDERS;
-    }
-
-    public String getSelected() {
-        return this.SELECTED;
-    }
 
     public void placeComponents() {
         // Create each item
@@ -331,106 +438,11 @@ public class SearchFrame extends JFrame implements ActionListener {
         this.add(cancelButton, gbc);
     }
 
-    public void update() {
-        this.revalidate();
-        this.repaint();
-        this.setVisible(true);
-    }
 
-    /**
-     * To override, to call when leaving the SearchFrame.
-     */
-    protected void closeSearchFrame() {
-        this.dispose();
-    }
-
-    public void actionPerformed(ActionEvent event) {
-        JButton button = (JButton) event.getSource();
-        this.BUTTONTEXT = button.getText();
-        if (this.BUTTONTEXT.equals(this.CANCELBUTTONTEXT)) {
-            this.SELECTED = "";
-            this.closeSearchFrame();
-        }
-        if (this.BUTTONTEXT.equals(this.CREATEFOLDERBUTTONTEXT)) {
-            if (!this.NEWFOLDERTEXTFIELD.getText().isBlank()) {
-                String newFolderName = this.NEWFOLDERTEXTFIELD.getText();
-                String newDirectory = this.CURRENTDIR + "/" + newFolderName;
-                try {
-                    Files.createDirectories(Paths.get(newDirectory));
-                    this.getFilesAndDirectories();
-                    this.buildJTree();
-                    this.update();
-                } catch (IOException e) {
-                    System.out.println(e.getMessage());
-                    this.ERROR = e.getMessage();
-                    this.closeSearchFrame();
-                }
-            }
-            this.NEWFOLDERTEXTFIELD.setText("");
-        }
-        if (this.BUTTONTEXT.equals(this.CREATEFILEBUTTONTEXT)) {
-            if (!this.NEWFILETEXTFIELD.getText().isBlank()) {
-                String newFileName = this.NEWFILETEXTFIELD.getText();
-                String newFullName = this.CURRENTDIR + "/" + newFileName;
-                try {
-                    Files.createFile(Paths.get(newFullName));
-                    this.getFilesAndDirectories();
-                    this.buildJTree();
-                    this.update();
-                } catch (IOException e) {
-                    System.out.println(e.getMessage());
-                    this.ERROR = e.getMessage();
-                    this.closeSearchFrame();
-                }
-            }
-            this.NEWFILETEXTFIELD.setText("");
-        }
-        if (this.BUTTONTEXT.equals(this.OPENBUTTONTEXT)) {
-            DefaultMutableTreeNode node = (DefaultMutableTreeNode) this.FOLDERTREE.getLastSelectedPathComponent();
-            if (node != null) {
-                FileOrFolderNode selectedNode = (FileOrFolderNode) node.getUserObject();
-                if (selectedNode.isFolder()) {
-                    try {
-                        this.CURRENTDIR += "/" + selectedNode.getName();
-                        this.getFilesAndDirectories();
-                        this.buildJTree();
-                        this.update();
-                    } catch (IOException e) {
-                        System.out.println(e.getMessage());
-                        this.ERROR = e.getMessage();
-                        this.closeSearchFrame();
-                    }
-                }
-            }
-        }
-        if (this.BUTTONTEXT.equals(this.SELECTBUTTONTEXT)) {
-            DefaultMutableTreeNode node = (DefaultMutableTreeNode) this.FOLDERTREE.getLastSelectedPathComponent();
-            if (node != null) {
-                FileOrFolderNode selectedNode = (FileOrFolderNode) node.getUserObject();
-                boolean condition = selectedNode.isFolder() && this.EXPECTEDTYPE.equals(ChooseType.FOLDER);
-                condition = condition || (!selectedNode.isFolder() && this.EXPECTEDTYPE.equals(ChooseType.FILE));
-                if (condition) {
-                    this.SELECTED = this.CURRENTDIR + "/" + selectedNode.getName();
-                    this.closeSearchFrame();
-                }
-            }
-        }
-        if (this.BUTTONTEXT.equals(this.BACKBUTTONTEXT)) {
-            try {
-                this.CURRENTDIR += "/..";
-                this.getFilesAndDirectories();
-                this.buildJTree();
-                this.update();
-            } catch (IOException e) {
-                System.out.println(e.getMessage());
-                this.ERROR = e.getMessage();
-                this.closeSearchFrame();
-            }
-        }
-    }
+    // ******************************** PRIVATE CLASSES ******************************** //
 
 
-    protected static class FileOrFolderNode {
+    private static class FileOrFolderNode {
 
         private String name;
         private boolean isFolder = true;
@@ -459,7 +471,7 @@ public class SearchFrame extends JFrame implements ActionListener {
     }
 
 
-    protected static class MyTreeCellRenderer extends DefaultTreeCellRenderer {
+    private static class MyTreeCellRenderer extends DefaultTreeCellRenderer {
 
         @Override
         public Component getTreeCellRendererComponent(JTree tree, Object value, boolean sel, boolean expanded, boolean leaf, int row, boolean hasFocus) {

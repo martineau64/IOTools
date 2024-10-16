@@ -14,10 +14,14 @@ import structures.CustomTree;
 
 public class FileManager {
 
-    private String rootLabel = "%root%";
+    private String ROOTLABEL = "%root%";
     
     private enum TokenTag {
         OPEN, CLOSE, BLANK, OTHER
+    }
+
+    public void setRootLabel(String rootLabel) {
+        this.ROOTLABEL = rootLabel;
     }
     
     private List<String> getFileLineByLine(String filePathName, boolean keepBlankLines)
@@ -117,7 +121,7 @@ public class FileManager {
                             String closeTag = XMLparts.get(1);
                             int lnToken = closeTag.length();
                             String closeLabel = XMLparts.get(1).substring(2, lnToken-1);
-                            if (closeLabel.equals(parent.getLabel()) && !closeLabel.equals(this.rootLabel)) {
+                            if (closeLabel.equals(parent.getLabel()) && !closeLabel.equals(this.ROOTLABEL)) {
                                 return parent.getParent();
                             } else {
                                 throw new IOException("Invalid XML line: Unexisting label " + closeLabel + ". Should close "
@@ -159,12 +163,12 @@ public class FileManager {
         if (lines.size() == 0) {
             throw new IOException("File " + filePathName + ":\n Empty or blank file, doesn't match standard xml format.");
         } else {
-            CustomTree<String> parent = new CustomTree<String>(this.rootLabel);
+            CustomTree<String> parent = new CustomTree<String>(this.ROOTLABEL);
             for (String line : lines) {
                 List<String> splittedLine = this.splitXMLLine(line);
                 parent = this.parseXMLLine(line, splittedLine, parent);
             }
-            if (parent.getLabel().equals(this.rootLabel)) {
+            if (parent.getLabel().equals(this.ROOTLABEL)) {
                 return parent;
             } else {
                 throw new IOException("Invalid XML file: All XML tags haven't been closed\n");

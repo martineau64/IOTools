@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import javax.swing.SwingUtilities;
+
 import java.awt.Toolkit;
 import java.awt.Component;
 import java.awt.Dimension;
@@ -16,11 +17,12 @@ import java.awt.Dimension;
 public class MainTemplateFrame extends JFrame {
     
     // First display parameter
-    protected double INITIALSCREENFACTOR = 1.3 / 2;
-    protected List<Component> MAINCOMPONENTS = new ArrayList<Component>();
-    
+    private double INITIALSCREENFACTOR = 1.3 / 2;
+    private List<Component> MAINCOMPONENTS = new ArrayList<Component>();
+
     public MainTemplateFrame() {
          // Define default frame parameters
+         this.computeDimensions();
          this.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
     }
 
@@ -37,7 +39,7 @@ public class MainTemplateFrame extends JFrame {
     }
     
     
-    // ******************************** BASIC METHODS ******************************** //
+    // ******************************** PUBLIC METHODS ******************************** //
     
     
     /**
@@ -48,7 +50,13 @@ public class MainTemplateFrame extends JFrame {
         int frameHeight = (int) (this.INITIALSCREENFACTOR * dimScreen.height);
         int frameWidth = (int) (this.INITIALSCREENFACTOR * dimScreen.width);
         this.setPreferredSize(new Dimension(frameWidth, frameHeight));
-        this.setLocation((dimScreen.width-frameWidth) / 2, (dimScreen.height-frameHeight) / 2);
+        this.setMinimumSize(new Dimension(frameWidth, frameHeight));
+    }
+
+    public void computeLocation() {
+        Dimension dimScreen = Toolkit.getDefaultToolkit().getScreenSize();
+        Dimension dimFrame = this.getSize();
+        this.setLocation((dimScreen.width-dimFrame.width) / 2, (dimScreen.height-dimFrame.height) / 2);
     }
 
     public void update() {
@@ -65,6 +73,5 @@ public class MainTemplateFrame extends JFrame {
         for (Component component : this.MAINCOMPONENTS) {
             this.remove(component);
         }
-        this.setVisible(false);
     }
 }
